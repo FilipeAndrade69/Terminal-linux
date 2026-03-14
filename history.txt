@@ -1,1 +1,10 @@
+pwd
+ls
+cd src
+ls
+mkdir teste
+touch teste1
+echo ola > teste1
+cat teste1
+history
 ls
