@@ -1,9 +1,11 @@
 package Terminal;
 
-import Terminal.command.*;
-import Terminal.manager.*;
-
-
+import Terminal.command.Command;
+import Terminal.command.CommandHandler;
+import Terminal.factory.CommandFactory;
+import Terminal.factory.StandardCommandFactory;
+import Terminal.manager.DirectoryManager;
+import Terminal.manager.FileManager;
 import java.util.Scanner;
 
 public class Terminal {
@@ -20,38 +22,40 @@ public class Terminal {
 
     public static void main(String[] args) throws Exception {
 
-        Scanner sc = new Scanner(System.in); //criançao do scanner
-        DirectoryManager dm = new DirectoryManager(); //cria o objeto que controla o diretŕoio atual do sistema
-        CommandHandler handler = new CommandHandler(); //cria o objeto responsável por registrar e recuperar comandos
+        try (Scanner sc = new Scanner(System.in)) { //criação do scanner
+            DirectoryManager dm = new DirectoryManager(); //cria o objeto que controla o diretório atual do sistema
+            CommandHandler handler = new CommandHandler(); //cria o objeto responsável por registrar e recuperar comandos
 
+            // Abstract Factory: trocar por VerboseCommandFactory para modo verboso
+            CommandFactory factory = new StandardCommandFactory();
 
-        showWelcome();
+            showWelcome();
 
+            handler.register("pwd",     factory.createPwd(dm));
+            handler.register("ls",      factory.createLs(dm));
+            handler.register("cd",      factory.createCd(dm));
+            handler.register("mkdir",   factory.createMkdir(dm));
+            handler.register("touch",   factory.createTouch(dm));
+            handler.register("rm",      factory.createRm(dm));
+            handler.register("cat",     factory.createCat(dm));
+            handler.register("echo",    factory.createEcho(dm));
+            handler.register("history", factory.createHistory());
+            handler.register("exit",    factory.createExit());
 
-        handler.register("pwd", new PwdCommand(dm));
-        handler.register("ls", new LsCommand(dm));
-        handler.register("cd", new CdCommand(dm));
-        handler.register("mkdir", new MkdirCommand(dm));
-        handler.register("touch", new TouchCommand(dm));
-        handler.register("rm", new RmCommand(dm));
-        handler.register("cat", new CatCommand(dm));
-        handler.register("echo", new EchoCommand(dm));
-        handler.register("history", new HistoryCommand());
-        handler.register("exit", new ExitCommand());
+            while (true) {
+                System.out.print("> ");
+                String input = sc.nextLine();
 
-        while (true) {
-            System.out.print("> ");
-            String input = sc.nextLine();
+                FileManager.write(input);
 
-            FileManager.write(input);
+                String[] parts = input.split(" ");
+                Command cmd = handler.get(parts[0]);
 
-            String[] parts = input.split(" ");
-            Command cmd = handler.get(parts[0]);
-
-            if (cmd == null) {
-                System.out.println("Comando não encontrado!!!");
-            } else {
-                cmd.execute(parts);
+                if (cmd == null) {
+                    System.out.println("Comando não encontrado!!!");
+                } else {
+                    cmd.execute(parts);
+                }
             }
         }
     }
